@@ -6,6 +6,7 @@
 - 체크포인트 : https://workflowy.com/s/assessment-check-po/T5YrzcMewfo4J6LW
 
 
+
 # Table of contents
 
 - [예제 ](#---)
@@ -27,6 +28,7 @@
     - [무정지 재배포](#무정지-재배포)
 
 
+
 # 서비스 시나리오
 
 기능적 요구사항
@@ -38,7 +40,9 @@
 1. 매칭요청이 취소되면 방문이 취소된다.
 1. 학생은 myPage에서 매칭 상태를 중간중간 조회할 수 있다.
 1. 매칭요청 화면에서 상태를 조회할 수 있다. 
-1. 매칭요청/결제요청/방문확정/결제취소/방문취소 시 상태가 변경된다. 
+1. 매칭요청/결제요청/방문확정/결제취소/방문취소 시 상태가 변경된다.
+1. 선생님이 방문 완료 요청한다. 
+1. 수업 상태 화면에서 선생님의 수업 완료 상태를 확인할 수 있다.
 
 비기능적 요구사항
 1. 트랜잭션
@@ -49,13 +53,13 @@
     1. 학생이 매칭시스템에서 확인할 수 있는 상태를 마이페이지(프론트엔드)에서 확인할 수 있어야 한다 CQRS
     1. 상태가 바뀔때마다 myPage에서는 변경된 상태를 조회할 수 있어야 한다. Event driven
     1. 방문 상태가 변경될 때 마다 매칭관리에서 상태가 변경되어야 한다. corelation
+    1. 방문 완료되면 수업 상태 화면에서 선생님의 수업 완료 상태를 확인할 수 있어야 한다. corelation
+
 
 
 # 체크포인트
 
 - 분석 설계
-
-
   - 이벤트스토밍: 
     - 스티커 색상별 객체의 의미를 제대로 이해하여 헥사고날 아키텍처와의 연계 설계에 적절히 반영하고 있는가?
     - 각 도메인 이벤트가 의미있는 수준으로 정의되었는가?
@@ -112,9 +116,9 @@
 
 # 분석/설계
 
-
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/oXrpW7GBVxVEQ4xDYSfbyK6tNEo1/every/1fcbffb626305265cb4134a6bd8f5216
+* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/xEZmSDJKirOi8JxZbHu3ZOJMmQY2/every/701ca815b3e6ac4e15668ef609e86f43
+
 
 ## 이벤트 도출
 ### 1차 이벤트스토밍 결과
@@ -123,25 +127,18 @@
 ### 최종 이벤트스토밍 결과
 ![image](https://user-images.githubusercontent.com/75401933/105022842-8e58b980-5a8d-11eb-868c-aae24f8db3ed.png)
 
-```
-- 도메인 서열 분리
-    - Core Domain:  match, visit  : 핵심 서비스이며, 연간 Up-time SLA 수준을 99.999% 목표, 배포주기는 match의 경우 1주일 1회 미만, visit의 경우 1개월 1회 미만
-    - Supporting Domain:  visitReqLists , myPages : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
-    - General Domain:   payment(결제) : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
-```
+### 개인 이벤트스토밍 결과
+![이벤트스토밍_je](https://user-images.githubusercontent.com/45473909/105210254-2c33ad80-5b8e-11eb-9349-5fcdcba17ded.PNG)
+
 
 ## 헥사고날 아키텍처 다이어그램 도출
-    
-![image](https://user-images.githubusercontent.com/45473909/105029093-3c1b9680-5a95-11eb-812d-b4b634e5fcec.png)
+![헥사고날아키텍처_je](https://user-images.githubusercontent.com/45473909/105210298-3786d900-5b8e-11eb-8937-5c0be0090db5.PNG)
 
-  - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
-  - 호출관계에서 PubSub 과 Req/Res 를 구분함
-  - 서브 도메인과 바운디드 컨텍스트의 분리:  각 팀의 KPI 별로 아래와 같이 관심 구현 스토리를 나눠가짐
 
 
 # 구현:
 
-분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 8084 이다)
+분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 8085 이다)
 
 ```
 cd match
@@ -154,6 +151,9 @@ cd payment
 mvn spring-boot:run 
 
 cd mypage
+mvn spring-boot:run  
+
+cd class
 mvn spring-boot:run  
 ```
 
@@ -244,25 +244,34 @@ public interface MatchRepository extends PagingAndSortingRepository<Match, Long>
 - 적용 후 REST API 의 테스트
 ```
 # match 서비스의 접수처리
-http localhost:8088/matches id=5000 price=50000 status=matchRequest
+http localhost:8088/matches id=5000 price=20000 status=matchRequest
 ```
-![1 match에서명령어날림](https://user-images.githubusercontent.com/45473909/105010823-898d0900-5a7f-11eb-82b3-ab7163311364.PNG)
+![1 매치날림](https://user-images.githubusercontent.com/45473909/105169628-2377b300-5b5f-11eb-8b31-88c88b23be0c.PNG)
 ```
-# match 서비스의 접수상태확인
-http localhost:8088/matches/5000
+# visit에서 선생님의 방문 일정 확정
+http POST localhost:8088/visits matchId=5000 teacher=kim visitDate=210101
 ```
-![2 match테이블에쌓임](https://user-images.githubusercontent.com/45473909/105010828-8b56cc80-5a7f-11eb-8a8e-9a96984d6ab6.PNG)
+![2 비지트날림](https://user-images.githubusercontent.com/45473909/105169631-24a8e000-5b5f-11eb-861a-26a85e956ef2.PNG)
 ```
 # payment 서비스의 상태확인
 http localhost:8088/payments/5000
 ```
-![3 payment에서match에서날린데이터확인](https://user-images.githubusercontent.com/45473909/105011427-48e1bf80-5a80-11eb-9c95-e3d2e760e931.PNG)
+![3 페이먼트확인](https://user-images.githubusercontent.com/45473909/105169640-25da0d00-5b5f-11eb-95b8-bd00fe9595a9.PNG)
 ```
-# match 서비스에 대한 visit 응답
-http POST localhost:8088/visits matchId=5000 teacher=TEACHER visitDate=21/01/21
+# myPage에서 match 서비스, visit 서비스 상태 확인
+http localhost:8088/myPages/5000
 ```
-![6 visit에서선생님방문계획작성](https://user-images.githubusercontent.com/45473909/105011436-4aab8300-5a80-11eb-8d3e-5fbe98a20668.PNG)
-
+![4 마이페이지확인](https://user-images.githubusercontent.com/45473909/105169645-27a3d080-5b5f-11eb-8487-48a314b14174.PNG)
+```
+# visit에서 승인된 일정 classStatus에서 확인
+http localhost:8088/classStatuses/5000
+```
+![5 클래스에선생님정보](https://user-images.githubusercontent.com/45473909/105169648-296d9400-5b5f-11eb-9850-e535c1153145.PNG)
+```
+# classStatus에서 방문 완료 접수처리
+http localhost:8088/classStatuses id=5000 status=classFinished
+```
+![6 클래스에수업상태](https://user-images.githubusercontent.com/45473909/105169653-2b375780-5b5f-11eb-9676-cca87ae082df.PNG)
 
 
 ## 동기식 호출과 Fallback 처리
@@ -337,9 +346,6 @@ http localhost:8088/matches id=5006 price=50000 status=matchRequest  #Success
 ```
 ![11 payment올리면match됨](https://user-images.githubusercontent.com/45473909/105013494-a8d96580-5a82-11eb-95de-73a47f072920.PNG)
 
-- 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
-
-
 
 ## 이벤트드리븐 아키텍쳐의 구현
 
@@ -370,8 +376,6 @@ public class Payment {
         PaymentApproved paymentApproved = new PaymentApproved();
         BeanUtils.copyProperties(this, paymentApproved);
         paymentApproved.publishAfterCommit();
-
-
     }
 
 
@@ -419,7 +423,6 @@ public class PolicyHandler{
 
 ```
 
-
 ### 시간적 디커플링 / 장애격리 
 
 방문(visit) 시스템은 결제(payment) 시스템과 완전히 분리되어있으며 이벤트 수신에 따라 처리되기 때문에, 방문 시스템이 유지보수로 인해 잠시 내려간 상태라도 방문요청(match) 및 결제(payment)하는데에 문제가 없다
@@ -451,7 +454,6 @@ http POST http://localhost:8082/visits matchId=101 teacher=Smith visitDate=20210
 http localhost:8082/visits     
 ```
 ![image](https://user-images.githubusercontent.com/75401933/105036115-65412480-5a9f-11eb-8cf8-ea4e46376a46.png)
-
 
 ### SAGA / Corelation
 
@@ -580,7 +582,7 @@ public void wheneverMatchCanceled_(@Payload MatchCanceled matchCanceled){
 ```
 - mypage의 view로 조회
 
-![image](https://user-images.githubusercontent.com/75401933/105024191-21462380-5a8f-11eb-8abc-b169dd9d8c3a.png)
+![4 마이페이지확인](https://user-images.githubusercontent.com/45473909/105169645-27a3d080-5b5f-11eb-8487-48a314b14174.PNG)
 
 
 ## 폴리글랏 퍼시스턴스
@@ -624,19 +626,23 @@ spring:
         - id: match
           uri: http://localhost:8081
           predicates:
-            - Path=/matches/**
+            - Path=/matches/** 
         - id: visit
           uri: http://localhost:8082
           predicates:
-            - Path=/visits/**,/visitReqLists/**
+            - Path=/visits/**, /visitReqLists/**
         - id: payment
           uri: http://localhost:8083
           predicates:
-            - Path=/payments/**
+            - Path=/payments/** 
         - id: mypage
           uri: http://localhost:8084
           predicates:
-            - Path=/myPages/**,/myPages/**
+            - Path=/myPages/**, /myPages/**
+        - id: class
+          uri: http://localhost:8085
+          predicates:
+            - Path=/classes/**, /classStatuses/**
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -658,19 +664,36 @@ spring:
         - id: match
           uri: http://match:8080
           predicates:
-            - Path=/matches/**
+            - Path=/matches/** 
         - id: visit
           uri: http://visit:8080
           predicates:
-            - Path=/visits/**,/visitReqLists/**
+            - Path=/visits/**, /visitReqLists/**
         - id: payment
           uri: http://payment:8080
           predicates:
-            - Path=/payments/**
+            - Path=/payments/** 
         - id: mypage
           uri: http://mypage:8080
           predicates:
-            - Path=/myPages/**,/myPages/**
+            - Path=/myPages/**, /myPages/**
+        - id: class
+          uri: http://class:8080
+          predicates:
+            - Path=/classes/**, /classStatuses/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
 ```
 
 - Gateway 서비스 실행 상태에서 8088과 8081로 각각 서비스 실행하였을 때 동일하게 match 서비스 실행되었다.
@@ -691,12 +714,11 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 ## CI/CD 설정
 각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 Azure를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하에 deployment.yml, service.yml 에 포함되었다
 
-<img width="678" alt="01 CI설정" src="https://user-images.githubusercontent.com/66051393/105039224-a4717480-5aa3-11eb-9d28-99fa5a809750.png">
+![CI](https://user-images.githubusercontent.com/45473909/105212831-4c18a080-5b91-11eb-8656-1a2c6d5225ee.PNG)
 
-<img width="886" alt="02 CD설정" src="https://user-images.githubusercontent.com/66051393/105039282-b521ea80-5aa3-11eb-94c3-1ec50475300d.png">
+![CD](https://user-images.githubusercontent.com/45473909/105212838-4e7afa80-5b91-11eb-85d2-1a43849fd84f.PNG)
 
-<img width="647" alt="03 CD설정_상세" src="https://user-images.githubusercontent.com/66051393/105039330-c5d26080-5aa3-11eb-8b05-cabb28c6eaf1.png">
-
+![REleases](https://user-images.githubusercontent.com/45473909/105213114-a4e83900-5b91-11eb-9169-6c3024c86654.png)
 
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
@@ -705,16 +727,13 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 서킷 브레이킹 프레임워크의 선택: Spring FeignClient + Hystrix 옵션을 사용하여 구현함
 시나리오는 매칭요청(match)-->결제(payment) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 결제 요청이 과도할 경우 CB 를 통하여 장애격리.
 
-
 1. Hystrix 를 설정:  요청처리 쓰레드에서 처리시간이 600 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
 - application.yml
 <img width="766" alt="01 화면증적" src="https://user-images.githubusercontent.com/66051393/105108052-c64b1580-5afc-11eb-88a8-b37a01a87896.png">
 
-
 2. 피호출 서비스(결제:payment) 의 임의 부하 처리 - 400 밀리에서 증감 300 밀리 정도 왔다갔다 하게
 - (payment) 결제이력.java (Entity)
 <img width="763" alt="02 화면증적" src="https://user-images.githubusercontent.com/66051393/105108324-54bf9700-5afd-11eb-8883-f60bbc6c8405.png">
-
 
 3. 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
  - 동시사용자 100명
