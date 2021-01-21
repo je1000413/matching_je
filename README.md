@@ -627,6 +627,8 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 ```
 ![8081포트](https://user-images.githubusercontent.com/45473909/105039551-0a5dfc00-5aa4-11eb-86c0-c3fc63d5b0f6.PNG)
 
+![레파지토리](https://user-images.githubusercontent.com/45473909/105269927-35496c80-5bd8-11eb-8334-138149a79a01.PNG)
+![repo](https://user-images.githubusercontent.com/45473909/105270011-5f9b2a00-5bd8-11eb-9c31-d2d0bc79bfbd.PNG)
 
 
 # 운영
@@ -638,8 +640,6 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 
 ![CD](https://user-images.githubusercontent.com/45473909/105212838-4e7afa80-5b91-11eb-85d2-1a43849fd84f.PNG)
 
-![REleases](https://user-images.githubusercontent.com/45473909/105213114-a4e83900-5b91-11eb-9169-6c3024c86654.png)
-
 
 ## 오토스케일 아웃
 
@@ -648,9 +648,8 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 visit 구현체에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 10프로를 넘어서면 replica 를 10개까지 늘려준다:
 
 kubectl autoscale deploy visit --min=1 --max=10 --cpu-percent=15
-
-<img width="504" alt="01 화면증적" src="https://user-images.githubusercontent.com/66051393/105040263-f8308d80-5aa4-11eb-9686-0afedeaa5a48.png">
-
+![hpa](https://user-images.githubusercontent.com/45473909/105269779-f5828500-5bd7-11eb-9970-fe3078215c2a.PNG)
+![HPA확인 및 기존 Replicas 수 확인](https://user-images.githubusercontent.com/45473909/105269786-f87d7580-5bd7-11eb-8c5b-e2a14aff0dce.PNG)
 
 kubectl exec -it pod siege -- /bin/bash
 siege -c20 -t120S -v http://visit:8080/visits/600
