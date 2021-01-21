@@ -627,6 +627,33 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 ```
 ![8081포트](https://user-images.githubusercontent.com/45473909/105039551-0a5dfc00-5aa4-11eb-86c0-c3fc63d5b0f6.PNG)
 
+
+## 폴리글랏 퍼시스턴스
+
+match 는 다른 서비스와 구별을 위해 별도 hsqldb를 사용 하였다. 이를 위해 match내 pom.xml에 dependency를 h2database에서 hsqldb로 변경 하였다.
+
+```
+#match의 pom.xml dependency를 수정하여 DB변경
+
+  <!--
+  <dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>runtime</scope>
+  </dependency>
+  -->
+
+  <dependency>
+    <groupId>org.hsqldb</groupId>
+    <artifactId>hsqldb</artifactId>
+    <version>2.4.0</version>
+    <scope>runtime</scope>
+  </dependency>
+
+```
+
+
+
 # 운영
 
 ## CI/CD 설정
@@ -654,26 +681,3 @@ siege -c20 -t120S -v http://visit:8080/visits/600
 ![오토스ㅔ일](https://user-images.githubusercontent.com/45473909/105271240-7fcbe880-5bda-11eb-83ad-7736a3d7234f.PNG)
 
 
-## 폴리글랏 퍼시스턴스
-
-match 는 다른 서비스와 구별을 위해 별도 hsqldb를 사용 하였다. 이를 위해 match내 pom.xml에 dependency를 h2database에서 hsqldb로 변경 하였다.
-
-```
-#match의 pom.xml dependency를 수정하여 DB변경
-
-  <!--
-  <dependency>
-    <groupId>com.h2database</groupId>
-    <artifactId>h2</artifactId>
-    <scope>runtime</scope>
-  </dependency>
-  -->
-
-  <dependency>
-    <groupId>org.hsqldb</groupId>
-    <artifactId>hsqldb</artifactId>
-    <version>2.4.0</version>
-    <scope>runtime</scope>
-  </dependency>
-
-```
