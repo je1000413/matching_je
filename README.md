@@ -647,7 +647,9 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 visit 구현체에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 10프로를 넘어서면 replica 를 10개까지 늘려준다:
 
 kubectl autoscale deploy visit --min=1 --max=10 --cpu-percent=10
+
 kubectl exec -it pod siege -- /bin/bash
+
 siege -c20 -t120S -v http://visit:8080/visits/600
 
 부하에 따라 visit pod의 cpu 사용률이 증가했고, Pod Replica 수가 증가하는 것을 확인할 수 있었음
