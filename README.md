@@ -345,8 +345,7 @@ public void wheneverMatchCanceled_(@Payload MatchCanceled matchCanceled){
 ```
 
 ![1 매치날림](https://user-images.githubusercontent.com/45473909/105169628-2377b300-5b5f-11eb-8b31-88c88b23be0c.PNG)
-
-
+![match테스트](https://user-images.githubusercontent.com/45473909/105259293-e2b78280-5bce-11eb-8c2d-051f8a9bace0.PNG)
 
 ## 동기식 호출과 Fallback 처리
 
@@ -507,13 +506,13 @@ public class PolicyHandler{
 # 매칭요청 처리
 http POST http://localhost:8081/matches id=101 price=5000 status=matchRequest   #Success
 ```
-![image](https://user-images.githubusercontent.com/75401910/105030156-bd275d80-5a96-11eb-87d0-7c16955c76ff.PNG)
+![비지트 내리고  매치](https://user-images.githubusercontent.com/45473909/105259784-c8ca6f80-5bcf-11eb-89f2-b1c147dc78e5.PNG)
 
 - 결제서비스가 정상적으로 조회되었는지 확인
 ```
 http http://localhost:8083/payments   #Success
 ```
-![image](https://user-images.githubusercontent.com/75401933/105035459-5efe7880-5a9e-11eb-9e60-d824d2f1a4cc.png)
+![비지트 내리고 페이먼트](https://user-images.githubusercontent.com/45473909/105259781-c700ac00-5bcf-11eb-8951-7869a55166f9.PNG)
 
 - 방문 서비스 다시 가동
 ```
@@ -527,7 +526,8 @@ mvn spring-boot:run
 http POST http://localhost:8082/visits matchId=101 teacher=Smith visitDate=20210101 
 http localhost:8082/visits     
 ```
-![image](https://user-images.githubusercontent.com/75401933/105036115-65412480-5a9f-11eb-8cf8-ea4e46376a46.png)
+![비지트다시올리고포스트](https://user-images.githubusercontent.com/45473909/105259782-c831d900-5bcf-11eb-9ffe-ace968715e7b.PNG)
+![비지트다시올리고확인](https://user-images.githubusercontent.com/45473909/105259783-c831d900-5bcf-11eb-8367-1a8564fa95f1.PNG)
 
 
 ## Gateway
