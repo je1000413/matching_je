@@ -69,7 +69,7 @@
 ![image](https://user-images.githubusercontent.com/75401933/105022842-8e58b980-5a8d-11eb-868c-aae24f8db3ed.png)
 
 ### 개인 이벤트스토밍 결과
-![이벤트스토밍_je](https://user-images.githubusercontent.com/45473909/105210254-2c33ad80-5b8e-11eb-9349-5fcdcba17ded.PNG)
+![image](https://user-images.githubusercontent.com/45473909/105315428-a4d45180-5c02-11eb-9462-a2af77f8c293.png)
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
