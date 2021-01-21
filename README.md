@@ -642,7 +642,6 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 
 ## 오토스케일 아웃
 
-
 visit 구현체에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 10프로를 넘어서면 replica 를 10개까지 늘려준다:
 
 kubectl autoscale deploy visit --min=1 --max=10 --cpu-percent=10
@@ -653,30 +652,6 @@ siege -c20 -t120S -v http://visit:8080/visits/600
 
 부하에 따라 visit pod의 cpu 사용률이 증가했고, Pod Replica 수가 증가하는 것을 확인할 수 있었다.
 ![오토스ㅔ일](https://user-images.githubusercontent.com/45473909/105271240-7fcbe880-5bda-11eb-83ad-7736a3d7234f.PNG)
-
-
-
-## 무정지 재배포
-
-먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 설정을 제거하였다.
-
-seige 로 배포작업 직전에 워크로드를 모니터링 했다.
-
-```
-siege -c10 -t30S -r10 --content-type "application/json" 'http://match:8080/matches POST {"id": "101"}'
-
-```
-1. CI/CD를 통해 새로운 배포 시작
-1. seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
-![image](https://user-images.githubusercontent.com/75401933/105041017-d7b50300-5aa5-11eb-90dd-5031cd846d81.png)
-
-1. 배포기간중 Availability 가 평소 100%에서 80% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
-1. CI/CD를 통해 새로운 배포 시작
-1. 동일한 시나리오로 재배포 한 후 Availability 확인:
-![image](https://user-images.githubusercontent.com/75401933/105041119-f4e9d180-5aa5-11eb-9afb-e7af9c06fcce.png)
-
-배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
-
 
 
 ## 폴리글랏 퍼시스턴스
