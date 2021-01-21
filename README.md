@@ -653,8 +653,9 @@ kubectl exec -it pod siege -- /bin/bash
 siege -c20 -t120S -v http://visit:8080/visits/600
 
 부하에 따라 visit pod의 cpu 사용률이 증가했고, Pod Replica 수가 증가하는 것을 확인할 수 있었음
+![오토스ㅔ일](https://user-images.githubusercontent.com/45473909/105271240-7fcbe880-5bda-11eb-83ad-7736a3d7234f.PNG)
 
-<img width="536" alt="02 화면증적" src="https://user-images.githubusercontent.com/66051393/105040477-3cbc2900-5aa5-11eb-94b8-7f2eb33102fa.png">
+
 
 
 ## 무정지 재배포
