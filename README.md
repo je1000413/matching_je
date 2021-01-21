@@ -523,7 +523,7 @@ mvn spring-boot:run
 - 가동 전/후의 방문상태 확인
 ```
 # 신규 접수된 매칭요청건에 대해 선생님과 방문일자 매칭
-http POST http://localhost:8082/visits matchId=101 teacher=Smith visitDate=20210101 
+http POST http://localhost:8082/visits matchId=20 teacher=kim visitDate=20210101 
 http localhost:8082/visits     
 ```
 ![비지트다시올리고포스트](https://user-images.githubusercontent.com/45473909/105259782-c831d900-5bcf-11eb-9ffe-ace968715e7b.PNG)
