@@ -63,7 +63,7 @@
 * MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/xEZmSDJKirOi8JxZbHu3ZOJMmQY2/every/701ca815b3e6ac4e15668ef609e86f43
 
 
-## 이벤트 도출
+## 이벤트 도출/Saga
 
 ### 최종 이벤트스토밍 결과
 ![image](https://user-images.githubusercontent.com/75401933/105022842-8e58b980-5a8d-11eb-868c-aae24f8db3ed.png)
@@ -213,6 +213,139 @@ http localhost:8088/classStatuses/5000
 http localhost:8088/classStatuses id=5000 status=classFinished
 ```
 ![6 클래스에수업상태](https://user-images.githubusercontent.com/45473909/105169653-2b375780-5b5f-11eb-9676-cca87ae082df.PNG)
+
+
+### CQRS
+
+매칭 상태가 변경될 때 마다 mypage에서 event를 수신하여 mypage의 매칭상태를 조회하도록 view를 구현하였다.   
+
+```
+# mypage > PolicyHandler.java
+
+@StreamListener(KafkaProcessor.INPUT)
+public void wheneverVisitCanceled_(@Payload VisitCanceled visitCanceled){
+
+    if(visitCanceled.isMe()){
+        System.out.println("##### listener  : " + visitCanceled.toJson());
+
+        MyPageRepository.findById(visitCanceled.getMatchId()).ifPresent(MyPage ->{
+            System.out.println("##### wheneverVisitCanceled_MyPageRepository.findById : exist" );
+            MyPage.setStatus(visitCanceled.getEventType());
+            MyPageRepository.save(MyPage);
+        });
+    }
+}
+@StreamListener(KafkaProcessor.INPUT)
+public void wheneverVisitAssigned_(@Payload VisitAssigned visitAssigned){
+
+    if(visitAssigned.isMe()){
+        System.out.println("##### listener wheneverVisitAssigned  : " + visitAssigned.toJson());
+
+        MyPageRepository.findById(visitAssigned.getMatchId()).ifPresent(MyPage ->{
+            System.out.println("##### wheneverVisitAssigned_MyPageRepository.findById : exist" );
+
+            MyPage.setStatus(visitAssigned.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
+            MyPage.setTeacher(visitAssigned.getTeacher());
+            MyPage.setVisitDate(visitAssigned.getVisitDate());
+            MyPageRepository.save(MyPage);
+        });
+
+    }
+}
+@StreamListener(KafkaProcessor.INPUT)
+public void wheneverPaymentApproved_(@Payload PaymentApproved paymentApproved){
+
+    if(paymentApproved.isMe()){
+        System.out.println("##### listener  : " + paymentApproved.toJson());
+
+        MyPage mypage = new MyPage();
+        mypage.setId(paymentApproved.getMatchId());
+        mypage.setPrice(paymentApproved.getPrice());
+        mypage.setStatus(paymentApproved.getEventType());
+        MyPageRepository.save(mypage);
+    }
+}
+@StreamListener(KafkaProcessor.INPUT)
+public void wheneverPaymentCanceled_(@Payload PaymentCanceled paymentCanceled){
+
+    if(paymentCanceled.isMe()){
+        System.out.println("##### listener  : " + paymentCanceled.toJson());
+
+
+        MyPageRepository.findById(paymentCanceled.getMatchId()).ifPresent(MyPage ->{
+            System.out.println("##### wheneverPaymentCanceled_MyPageRepository.findById : exist" );
+
+            MyPage.setStatus(paymentCanceled.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
+            MyPageRepository.save(MyPage);
+        });
+    }
+}
+@StreamListener(KafkaProcessor.INPUT)
+public void wheneverMatchCanceled_(@Payload MatchCanceled matchCanceled){
+
+    if(matchCanceled.isMe()){
+        System.out.println("##### listener  : " + matchCanceled.toJson());
+
+        MyPageRepository.findById(matchCanceled.getId()).ifPresent(MyPage ->{
+            System.out.println("##### wheneverMatchCanceled_MyPageRepository.findById : exist" );
+
+            MyPage.setStatus(matchCanceled.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
+            MyPageRepository.save(MyPage);
+        });
+
+    }
+}
+    
+```
+- mypage의 view로 조회
+
+![4 마이페이지확인](https://user-images.githubusercontent.com/45473909/105169645-27a3d080-5b5f-11eb-8487-48a314b14174.PNG)
+
+
+### SAGA / Corelation
+
+방문(visit) 시스템에서 상태가 방문확정 또는 방문취소로 변경되면 매치(match) 시스템 원천데이터의 상태(status) 정보가 update된다.  
+
+```
+# mypage > PolicyHandler.java
+
+  @StreamListener(KafkaProcessor.INPUT)
+  public void wheneverVisitAssigned_(@Payload VisitAssigned visitAssigned){
+
+      if(visitAssigned.isMe()){
+          System.out.println("##### listener wheneverVisitAssigned  : " + visitAssigned.toJson());
+
+          //방문 assign 이벤트를 수신하였을 때 해당 ID를 찾아서 상태값을 visitAssigned로 변경
+          MatchRepository.findById(visitAssigned.getMatchId()).ifPresent(Match ->{
+              System.out.println("##### wheneverVisitAssigned_MatchRepository.findById : exist" );
+
+              Match.setStatus(visitAssigned.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
+              MatchRepository.save(Match);
+          });
+
+      }
+  }
+
+
+  @StreamListener(KafkaProcessor.INPUT)
+  public void wheneverVisitCanceled_(@Payload VisitCanceled visitCanceled) {
+
+      if (visitCanceled.isMe()) {
+          System.out.println("##### listener  : " + visitCanceled.toJson());
+
+          //방문취소 이벤트를 수신하였을 때 해당 ID를 찾아서 상태값을 visitCanceled로 변경
+          MatchRepository.findById(visitCanceled.getMatchId()).ifPresent(Match -> {
+              System.out.println("##### wheneverVisitCanceled_MatchRepository.findById : exist");
+              Match.setStatus(visitCanceled.getEventType());
+              MatchRepository.save(Match);
+          });
+      }
+  }
+
+```
+
+![1 매치날림](https://user-images.githubusercontent.com/45473909/105169628-2377b300-5b5f-11eb-8b31-88c88b23be0c.PNG)
+
 
 
 ## 동기식 호출과 Fallback 처리
@@ -396,163 +529,6 @@ http localhost:8082/visits
 ```
 ![image](https://user-images.githubusercontent.com/75401933/105036115-65412480-5a9f-11eb-8cf8-ea4e46376a46.png)
 
-### SAGA / Corelation
-
-방문(visit) 시스템에서 상태가 방문확정 또는 방문취소로 변경되면 매치(match) 시스템 원천데이터의 상태(status) 정보가 update된다.  
-
-```
-# mypage > PolicyHandler.java
-
-  @StreamListener(KafkaProcessor.INPUT)
-  public void wheneverVisitAssigned_(@Payload VisitAssigned visitAssigned){
-
-      if(visitAssigned.isMe()){
-          System.out.println("##### listener wheneverVisitAssigned  : " + visitAssigned.toJson());
-
-          //방문 assign 이벤트를 수신하였을 때 해당 ID를 찾아서 상태값을 visitAssigned로 변경
-          MatchRepository.findById(visitAssigned.getMatchId()).ifPresent(Match ->{
-              System.out.println("##### wheneverVisitAssigned_MatchRepository.findById : exist" );
-
-              Match.setStatus(visitAssigned.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-              MatchRepository.save(Match);
-          });
-
-      }
-  }
-
-
-  @StreamListener(KafkaProcessor.INPUT)
-  public void wheneverVisitCanceled_(@Payload VisitCanceled visitCanceled) {
-
-      if (visitCanceled.isMe()) {
-          System.out.println("##### listener  : " + visitCanceled.toJson());
-
-          //방문취소 이벤트를 수신하였을 때 해당 ID를 찾아서 상태값을 visitCanceled로 변경
-          MatchRepository.findById(visitCanceled.getMatchId()).ifPresent(Match -> {
-              System.out.println("##### wheneverVisitCanceled_MatchRepository.findById : exist");
-              Match.setStatus(visitCanceled.getEventType());
-              MatchRepository.save(Match);
-          });
-      }
-  }
-
-```
-
-![1 매치날림](https://user-images.githubusercontent.com/45473909/105169628-2377b300-5b5f-11eb-8b31-88c88b23be0c.PNG)
-
-
-
-### CQRS
-
-매칭 상태가 변경될 때 마다 mypage에서 event를 수신하여 mypage의 매칭상태를 조회하도록 view를 구현하였다.   
-
-```
-# mypage > PolicyHandler.java
-
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverVisitCanceled_(@Payload VisitCanceled visitCanceled){
-
-    if(visitCanceled.isMe()){
-        System.out.println("##### listener  : " + visitCanceled.toJson());
-
-        MyPageRepository.findById(visitCanceled.getMatchId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverVisitCanceled_MyPageRepository.findById : exist" );
-            MyPage.setStatus(visitCanceled.getEventType());
-            MyPageRepository.save(MyPage);
-        });
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverVisitAssigned_(@Payload VisitAssigned visitAssigned){
-
-    if(visitAssigned.isMe()){
-        System.out.println("##### listener wheneverVisitAssigned  : " + visitAssigned.toJson());
-
-        MyPageRepository.findById(visitAssigned.getMatchId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverVisitAssigned_MyPageRepository.findById : exist" );
-
-            MyPage.setStatus(visitAssigned.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-            MyPage.setTeacher(visitAssigned.getTeacher());
-            MyPage.setVisitDate(visitAssigned.getVisitDate());
-            MyPageRepository.save(MyPage);
-        });
-
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverPaymentApproved_(@Payload PaymentApproved paymentApproved){
-
-    if(paymentApproved.isMe()){
-        System.out.println("##### listener  : " + paymentApproved.toJson());
-
-        MyPage mypage = new MyPage();
-        mypage.setId(paymentApproved.getMatchId());
-        mypage.setPrice(paymentApproved.getPrice());
-        mypage.setStatus(paymentApproved.getEventType());
-        MyPageRepository.save(mypage);
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverPaymentCanceled_(@Payload PaymentCanceled paymentCanceled){
-
-    if(paymentCanceled.isMe()){
-        System.out.println("##### listener  : " + paymentCanceled.toJson());
-
-
-        MyPageRepository.findById(paymentCanceled.getMatchId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverPaymentCanceled_MyPageRepository.findById : exist" );
-
-            MyPage.setStatus(paymentCanceled.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-            MyPageRepository.save(MyPage);
-        });
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverMatchCanceled_(@Payload MatchCanceled matchCanceled){
-
-    if(matchCanceled.isMe()){
-        System.out.println("##### listener  : " + matchCanceled.toJson());
-
-        MyPageRepository.findById(matchCanceled.getId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverMatchCanceled_MyPageRepository.findById : exist" );
-
-            MyPage.setStatus(matchCanceled.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-            MyPageRepository.save(MyPage);
-        });
-
-    }
-}
-    
-```
-- mypage의 view로 조회
-
-![4 마이페이지확인](https://user-images.githubusercontent.com/45473909/105169645-27a3d080-5b5f-11eb-8487-48a314b14174.PNG)
-
-
-## 폴리글랏 퍼시스턴스
-
-match 는 다른 서비스와 구별을 위해 별도 hsqldb를 사용 하였다. 이를 위해 match내 pom.xml에 dependency를 h2database에서 hsqldb로 변경 하였다.
-
-```
-#match의 pom.xml dependency를 수정하여 DB변경
-
-  <!--
-  <dependency>
-    <groupId>com.h2database</groupId>
-    <artifactId>h2</artifactId>
-    <scope>runtime</scope>
-  </dependency>
-  -->
-
-  <dependency>
-    <groupId>org.hsqldb</groupId>
-    <artifactId>hsqldb</artifactId>
-    <version>2.4.0</version>
-    <scope>runtime</scope>
-  </dependency>
-
-```
-
 
 ## Gateway
 
@@ -665,7 +641,7 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 ![REleases](https://user-images.githubusercontent.com/45473909/105213114-a4e83900-5b91-11eb-9169-6c3024c86654.png)
 
 
-## 동기식 호출 / 서킷 브레이킹 / 장애격리
+## 서킷 브레이킹
 
 
 서킷 브레이킹 프레임워크의 선택: Spring FeignClient + Hystrix 옵션을 사용하여 구현함
@@ -715,6 +691,27 @@ siege -c20 -t120S -v http://visit:8080/visits/600
 <img width="536" alt="02 화면증적" src="https://user-images.githubusercontent.com/66051393/105040477-3cbc2900-5aa5-11eb-94b8-7f2eb33102fa.png">
 
 
+## 무정지 재배포
+
+먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
+seige 로 배포작업 직전에 워크로드를 모니터링 함.
+
+```
+siege -c10 -t30S -r10 --content-type "application/json" 'http://match:8080/matches POST {"id": "101"}'
+
+```
+1. CI/CD를 통해 새로운 배포 시작
+1. seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+![image](https://user-images.githubusercontent.com/75401933/105041017-d7b50300-5aa5-11eb-90dd-5031cd846d81.png)
+
+1. 배포기간중 Availability 가 평소 100%에서 80% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
+1. CI/CD를 통해 새로운 배포 시작
+1. 동일한 시나리오로 재배포 한 후 Availability 확인:
+![image](https://user-images.githubusercontent.com/75401933/105041119-f4e9d180-5aa5-11eb-9afb-e7af9c06fcce.png)
+
+배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+
+
 ## Persistence Volume
 
 visit 컨테이너를 마이크로서비스로 배포하면서 영속성 있는 저장장치(Persistent Volume)를 적용함
@@ -735,6 +732,31 @@ mypage 구현체에서 해당 pvc를 volumeMount 하여 사용 (kubectl get depl
 <img width="482" alt="03 mount_설정확인" src="https://user-images.githubusercontent.com/66051393/105042971-41361100-5aa8-11eb-8fa7-65efbe12fb8c.png">
 
 
+## 폴리글랏 퍼시스턴스
+
+match 는 다른 서비스와 구별을 위해 별도 hsqldb를 사용 하였다. 이를 위해 match내 pom.xml에 dependency를 h2database에서 hsqldb로 변경 하였다.
+
+```
+#match의 pom.xml dependency를 수정하여 DB변경
+
+  <!--
+  <dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>runtime</scope>
+  </dependency>
+  -->
+
+  <dependency>
+    <groupId>org.hsqldb</groupId>
+    <artifactId>hsqldb</artifactId>
+    <version>2.4.0</version>
+    <scope>runtime</scope>
+  </dependency>
+
+```
+
+
 ## Self_healing (liveness probe)
 mypage구현체의 deployment.yaml 소스 서비스포트를 8080이 아닌 고의로 8081로 변경하여 재배포한 후 pod 상태 확인
 
@@ -747,22 +769,3 @@ mypage구현체의 deployment.yaml 소스 서비스포트를 8080이 아닌 고�
 <img width="581" alt="03 증적자료_POD비정상으로재기동" src="https://user-images.githubusercontent.com/66051393/105043596-0ed8e380-5aa9-11eb-9c46-dabe5736df9c.png">
 
 
-## 무정지 재배포
-
-먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
-seige 로 배포작업 직전에 워크로드를 모니터링 함.
-
-```
-siege -c10 -t30S -r10 --content-type "application/json" 'http://match:8080/matches POST {"id": "101"}'
-
-```
-1. CI/CD를 통해 새로운 배포 시작
-1. seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
-![image](https://user-images.githubusercontent.com/75401933/105041017-d7b50300-5aa5-11eb-90dd-5031cd846d81.png)
-
-1. 배포기간중 Availability 가 평소 100%에서 80% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
-1. CI/CD를 통해 새로운 배포 시작
-1. 동일한 시나리오로 재배포 한 후 Availability 확인:
-![image](https://user-images.githubusercontent.com/75401933/105041119-f4e9d180-5aa5-11eb-9afb-e7af9c06fcce.png)
-
-배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
