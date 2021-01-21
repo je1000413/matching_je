@@ -217,90 +217,55 @@ http localhost:8088/classStatuses id=5000 status=classFinished
 
 ### CQRS
 
-매칭 상태가 변경될 때 마다 mypage에서 event를 수신하여 mypage의 매칭상태를 조회하도록 view를 구현하였다.   
+수업 상태가 변하면 class 서비스 및 classStatus view에서 확인할 수 있도록 구현하였다.  
 
 ```
-# mypage > PolicyHandler.java
+# class > ClassStatusViewHandler.java
 
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverVisitCanceled_(@Payload VisitCanceled visitCanceled){
+ @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverVisitAssigned_(@Payload final VisitAssigned visitAssigned){
 
-    if(visitCanceled.isMe()){
-        System.out.println("##### listener  : " + visitCanceled.toJson());
+        if(visitAssigned.isMe()){
+            System.out.println("##### listener  : " + visitAssigned.toJson());
 
-        MyPageRepository.findById(visitCanceled.getMatchId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverVisitCanceled_MyPageRepository.findById : exist" );
-            MyPage.setStatus(visitCanceled.getEventType());
-            MyPageRepository.save(MyPage);
-        });
+            final ClassStatus classStatus = new ClassStatus();
+
+            classStatus.setId(visitAssigned.getMatchId());
+            classStatus.setTeacher(visitAssigned.getTeacher());
+            classStatus.setVisitDate(visitAssigned.getVisitDate());
+            classStatusRepository.save(classStatus);
+        }
     }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverVisitAssigned_(@Payload VisitAssigned visitAssigned){
+    
 
-    if(visitAssigned.isMe()){
-        System.out.println("##### listener wheneverVisitAssigned  : " + visitAssigned.toJson());
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverClassFinished_(@Payload final ClassFinished classFinished){
 
-        MyPageRepository.findById(visitAssigned.getMatchId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverVisitAssigned_MyPageRepository.findById : exist" );
+        if(classFinished.isMe()){
+            System.out.println("##### listener  : " + classFinished.toJson());
 
-            MyPage.setStatus(visitAssigned.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-            MyPage.setTeacher(visitAssigned.getTeacher());
-            MyPage.setVisitDate(visitAssigned.getVisitDate());
-            MyPageRepository.save(MyPage);
-        });
+            classStatusRepository.findById(classFinished.getId()).ifPresent(cclassStatus ->{
+                cclassStatus.setStatus(classFinished.getClassStatus());
+                classStatusRepository.save(cclassStatus);
 
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverPaymentApproved_(@Payload PaymentApproved paymentApproved){
-
-    if(paymentApproved.isMe()){
-        System.out.println("##### listener  : " + paymentApproved.toJson());
-
-        MyPage mypage = new MyPage();
-        mypage.setId(paymentApproved.getMatchId());
-        mypage.setPrice(paymentApproved.getPrice());
-        mypage.setStatus(paymentApproved.getEventType());
-        MyPageRepository.save(mypage);
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverPaymentCanceled_(@Payload PaymentCanceled paymentCanceled){
-
-    if(paymentCanceled.isMe()){
-        System.out.println("##### listener  : " + paymentCanceled.toJson());
-
-
-        MyPageRepository.findById(paymentCanceled.getMatchId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverPaymentCanceled_MyPageRepository.findById : exist" );
-
-            MyPage.setStatus(paymentCanceled.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-            MyPageRepository.save(MyPage);
-        });
-    }
-}
-@StreamListener(KafkaProcessor.INPUT)
-public void wheneverMatchCanceled_(@Payload MatchCanceled matchCanceled){
-
-    if(matchCanceled.isMe()){
-        System.out.println("##### listener  : " + matchCanceled.toJson());
-
-        MyPageRepository.findById(matchCanceled.getId()).ifPresent(MyPage ->{
-            System.out.println("##### wheneverMatchCanceled_MyPageRepository.findById : exist" );
-
-            MyPage.setStatus(matchCanceled.getEventType()); //상태값은 모두 이벤트타입으로 셋팅함
-            MyPageRepository.save(MyPage);
-        });
-
+            });
+        }
     }
 }
     
 ```
-- mypage의 view로 조회
+- class의 view로 확인
+![class 첫화면](https://user-images.githubusercontent.com/45473909/105314095-68ecbc80-5c01-11eb-9cb9-cce0d09956bf.PNG)
 
-![4 마이페이지확인](https://user-images.githubusercontent.com/45473909/105169645-27a3d080-5b5f-11eb-8487-48a314b14174.PNG)
+![class 화면](https://user-images.githubusercontent.com/45473909/105314121-6ab68000-5c01-11eb-93b2-6890984d28a7.PNG)
 
+![classS 첫화면](https://user-images.githubusercontent.com/45473909/105314147-6be7ad00-5c01-11eb-8557-626fa5e67485.PNG)
+
+![classS에서 들어온거](https://user-images.githubusercontent.com/45473909/105314161-6c804380-5c01-11eb-8c3d-2eee6185c9cf.PNG)
+
+![class로 상태 날리고](https://user-images.githubusercontent.com/45473909/105314187-6e4a0700-5c01-11eb-986f-26743c5b0949.PNG)
+
+![class에서 들어온거](https://user-images.githubusercontent.com/45473909/105314208-6f7b3400-5c01-11eb-8838-7d6a728c833a.PNG)
 
 ### SAGA / Corelation
 
