@@ -627,10 +627,6 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 ```
 ![8081포트](https://user-images.githubusercontent.com/45473909/105039551-0a5dfc00-5aa4-11eb-86c0-c3fc63d5b0f6.PNG)
 
-![레파지토리](https://user-images.githubusercontent.com/45473909/105269927-35496c80-5bd8-11eb-8334-138149a79a01.PNG)
-![repo](https://user-images.githubusercontent.com/45473909/105270011-5f9b2a00-5bd8-11eb-9c31-d2d0bc79bfbd.PNG)
-
-
 # 운영
 
 ## CI/CD 설정
@@ -639,6 +635,9 @@ http localhost:8081/matches id=51 price=50000 status=matchRequest
 ![CI](https://user-images.githubusercontent.com/45473909/105212831-4c18a080-5b91-11eb-8656-1a2c6d5225ee.PNG)
 
 ![CD](https://user-images.githubusercontent.com/45473909/105212838-4e7afa80-5b91-11eb-85d2-1a43849fd84f.PNG)
+
+![레파지토리](https://user-images.githubusercontent.com/45473909/105269927-35496c80-5bd8-11eb-8334-138149a79a01.PNG)
+![repo](https://user-images.githubusercontent.com/45473909/105270011-5f9b2a00-5bd8-11eb-9c31-d2d0bc79bfbd.PNG)
 
 
 ## 오토스케일 아웃
