@@ -652,16 +652,16 @@ kubectl exec -it pod siege -- /bin/bash
 
 siege -c20 -t120S -v http://visit:8080/visits/600
 
-부하에 따라 visit pod의 cpu 사용률이 증가했고, Pod Replica 수가 증가하는 것을 확인할 수 있었음
+부하에 따라 visit pod의 cpu 사용률이 증가했고, Pod Replica 수가 증가하는 것을 확인할 수 있었다.
 ![오토스ㅔ일](https://user-images.githubusercontent.com/45473909/105271240-7fcbe880-5bda-11eb-83ad-7736a3d7234f.PNG)
-
 
 
 
 ## 무정지 재배포
 
-먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
-seige 로 배포작업 직전에 워크로드를 모니터링 함.
+먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거하였다.
+
+seige 로 배포작업 직전에 워크로드를 모니터링 했다.
 
 ```
 siege -c10 -t30S -r10 --content-type "application/json" 'http://match:8080/matches POST {"id": "101"}'
@@ -678,25 +678,6 @@ siege -c10 -t30S -r10 --content-type "application/json" 'http://match:8080/match
 
 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
-
-## Persistence Volume
-
-visit 컨테이너를 마이크로서비스로 배포하면서 영속성 있는 저장장치(Persistent Volume)를 적용함
-
-• PVC 설정 확인
-
-kubectl describe pvc azure-pvc
-
-<img width="546" alt="01-1 화면증적(decribe)" src="https://user-images.githubusercontent.com/66051393/105042326-73933e80-5aa7-11eb-8c4f-94b46c811e56.png">
-
-• PVC Volume설정 확인
-mypage 구현체에서 해당 pvc를 volumeMount 하여 사용 (kubectl get deployment mypage -o yaml)
-
-<img width="583" alt="02 화면증적" src="https://user-images.githubusercontent.com/66051393/105042760-f87e5800-5aa7-11eb-9447-2ecb7d427623.png">
-
-• mypage pod에 접속하여 mount 용량 확인
-
-<img width="482" alt="03 mount_설정확인" src="https://user-images.githubusercontent.com/66051393/105042971-41361100-5aa8-11eb-8fa7-65efbe12fb8c.png">
 
 
 ## 폴리글랏 퍼시스턴스
@@ -722,17 +703,3 @@ match 는 다른 서비스와 구별을 위해 별도 hsqldb를 사용 하였다
   </dependency>
 
 ```
-
-
-## Self_healing (liveness probe)
-mypage구현체의 deployment.yaml 소스 서비스포트를 8080이 아닌 고의로 8081로 변경하여 재배포한 후 pod 상태 확인
-
-• 정상 서비스포트 확인
-
-<img width="557" alt="01 증적자료" src="https://user-images.githubusercontent.com/66051393/105043345-c4effd80-5aa8-11eb-83db-df351905d102.png">
-
-• 비정상 상태의 pod 정보 확인
-
-<img width="581" alt="03 증적자료_POD비정상으로재기동" src="https://user-images.githubusercontent.com/66051393/105043596-0ed8e380-5aa9-11eb-9c46-dabe5736df9c.png">
-
-
