@@ -254,18 +254,35 @@ http localhost:8088/classStatuses id=5000 status=classFinished
 }
     
 ```
+
 - class의 view로 확인
+
+
+visit 승인 후 class 데이터 확인
+
 ![class 첫화면](https://user-images.githubusercontent.com/45473909/105314095-68ecbc80-5c01-11eb-9cb9-cce0d09956bf.PNG)
 
-![class 화면](https://user-images.githubusercontent.com/45473909/105314121-6ab68000-5c01-11eb-93b2-6890984d28a7.PNG)
+
+visit 승인 후 classStatus 데이터 확인
 
 ![classS 첫화면](https://user-images.githubusercontent.com/45473909/105314147-6be7ad00-5c01-11eb-8557-626fa5e67485.PNG)
 
-![classS에서 들어온거](https://user-images.githubusercontent.com/45473909/105314161-6c804380-5c01-11eb-8c3d-2eee6185c9cf.PNG)
+ 
+ class에서 class 종료 전송
 
 ![class로 상태 날리고](https://user-images.githubusercontent.com/45473909/105314187-6e4a0700-5c01-11eb-986f-26743c5b0949.PNG)
+ 
+ 
+classFinish 후 class 데이터 확인
 
-![class에서 들어온거](https://user-images.githubusercontent.com/45473909/105314208-6f7b3400-5c01-11eb-8838-7d6a728c833a.PNG)
+![class 화면](https://user-images.githubusercontent.com/45473909/105314121-6ab68000-5c01-11eb-93b2-6890984d28a7.PNG)
+
+
+classFinish 후 classStatus 데이터 확인
+
+![classS에서 들어온거](https://user-images.githubusercontent.com/45473909/105314161-6c804380-5c01-11eb-8c3d-2eee6185c9cf.PNG)
+
+
 
 ### SAGA / Corelation
 
